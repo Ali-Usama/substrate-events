@@ -1,0 +1,14 @@
+{
+  "name": "substrate-events",
+  "version": "1.0.0",
+  "description": "A package to listen to a substrate node events",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Usama Ali",
+  "license": "ISC",
+  "dependencies": {
+    "@polkadot/api": "^10.2.1"
+  }
+}
