@@ -3,20 +3,14 @@ const {ApiPromise, WsProvider} = require('@polkadot/api');
 const fs = require('fs');
 
 async function main() {
-    const provider = new WsProvider("wss://rpc.polkadot.io");
-    // Create our API with a default connection to the local node
-    const api = await ApiPromise.create({ provider });
+    const provider = new WsProvider("wss://polkadot-rpc.dwellir.com");
+    const api = await ApiPromise.create({provider});
 
+    const all_events = []
     // Subscribe to system events via storage
     await api.query.system.events((events) => {
         const event_length = `\nReceived ${events.length} events:`
         console.log(event_length);
-
-        fs.writeFile('events.txt', event_length, {flag: 'a+'}, err => {
-            if (err) {
-                console.error(err);
-            }
-        });
 
         // Loop through the Vec<EventRecord>
         events.forEach((record) => {
@@ -24,44 +18,34 @@ async function main() {
             const {event, phase} = record;
             const types = event.typeDef;
 
-            // Show what we are busy with
-            const event_section = `\t${event.section}:${event.method}:: (phase=${phase.toString()})`
-            const event_docs = `\t\t${event.meta.docs.toString()}`
-            console.log(event_section);
-            console.log(event_docs);
+            const event_section = `${event.section}:${event.method}:: (phase=${phase.toString()})`;
+            const event_docs = `${event.meta.docs.toString()}`;
+            // console.log(JSON.stringify(event_section));
+            // console.log(JSON.stringify(event_docs));
 
-            fs.writeFile('events.txt', event_section, {flag: 'a+'}, err => {
-                if (err) {
-                    console.error(err);
-                }
-            });
+            all_events.push({event_section, event_docs});
 
-            fs.writeFile('events.txt', event_docs, {flag: 'a+'}, err => {
-                if (err) {
-                    console.error(err);
-                }
-            });
+            // console.log(`All events docs ${JSON.stringify(all_events)}`);
 
             // Loop through each of the parameters, displaying the type and data
             event.data.forEach((data, index) => {
-                const event_types = `\t\t\t${types[index].type}: ${data.toString()}`;
+                const event_types = `${types[index].type}: ${data.toString()}`;
                 console.log(event_types);
 
-                fs.writeFile('events.txt', event_types, {flag: 'a+'}, err => {
-                    if (err) {
-                        console.error(err);
-                    }
-                });
-
-                const end_event = "\n\n\n====================================\n\n\n"
-                fs.writeFile('events.txt', end_event, {flag: 'a+'}, err => {
-                    if (err) {
-                        console.error(err);
-                    }
-                });
+                all_events.push({event_types})
             });
+
+            try {
+                fs.writeFileSync('events.json', JSON.stringify(all_events, null, 2), {flag: 'a+'});
+                console.log('Events saved to events.json');
+            } catch (err) {
+                console.log(err)
+            }
+
         });
     });
+
+    console.log(`All events ${JSON.stringify(all_events)}`);
 }
 
 main().catch((error) => {
